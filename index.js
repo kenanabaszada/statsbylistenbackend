@@ -1,35 +1,41 @@
-require('dotenv').config();  
-
+// index.js
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { sequelize, connectDB } = require('./config/db'); 
-const uploadRoutes = require('./routes/uploadRoutes');  
+const { sequelize, connectDB } = require('./config/db');
+const PgTest = require('./models/pgTest'); // Import models here
+const pgTestRoutes = require('./routes/pgTestRoutes'); 
 const app = express();
 const port = 3001;
 
 // Middleware
-app.use(express.json()); // For parsing JSON bodies
-app.use(cors()); // Enable Cross-Origin Requests
+app.use(express.json());
+app.use(cors());
 
-// Test route to verify database connection
+// Sync Models
+const initializeModels = async () => {
+  await PgTest.sync({ alter: true }); // Ensure the table exists or update it
+  console.log('PgTest table synced successfully!');
+};
+
+// Connect DB and Initialize Models
+connectDB()
+  .then(initializeModels)
+  .catch((err) => console.error('Error initializing models:', err));
+
+// Routes
 app.get('/api/test', async (req, res) => {
   try {
-    // Using Sequelize query example
     const result = await sequelize.query('SELECT * FROM pgtest');
-    res.json(result[0]); // Sequelize returns the result as an array
+    res.json(result[0]);
   } catch (err) {
     console.error('Database query failed:', err);
     res.status(500).json({ error: 'Failed to fetch data', err: err.message });
   }
 });
 
-// Setup file upload route
-app.use('/api/', uploadRoutes);
-
-// Connect to the database using Sequelize
-connectDB();
-
-// Start the server
-app.listen(port, () => {  
+app.use('/api', pgTestRoutes); 
+// Start server
+app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
