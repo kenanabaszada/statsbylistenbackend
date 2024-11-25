@@ -1,14 +1,16 @@
-// config/db.js
 const { Sequelize } = require('sequelize');
 
-// Create Sequelize instance
-const sequelize = new Sequelize({
-  host: process.env.DB_HOST,
-  dialect: 'postgres',
-  username: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  logging: false, // Disable query logging
+// Create Sequelize instance using the connection string
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+  dialect: 'postgres',            // Specify dialect explicitly
+  logging: false,                 // Disable query logging
+  ssl: true,                      // Enable SSL for Render DB
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false,  // Necessary for Render self-signed certs
+    },
+  },
 });
 
 // Test connection
@@ -22,5 +24,4 @@ const connectDB = async () => {
   }
 };
 
-// Export sequelize and connectDB
 module.exports = { sequelize, connectDB };
